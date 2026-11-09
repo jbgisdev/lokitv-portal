@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Tv,
   X,
+  Film,
 } from 'lucide-react';
 import {
   channelsService,
@@ -25,6 +26,7 @@ import {
   formatChannelNumber,
   formatCategory,
 } from '../../services/channels.service';
+import { exportToVLCPlaylist } from '../../utils/xspfExport';
 import { Channel } from '../../types';
 import { ChannelLogo } from './ChannelLogo';
 import { ChannelCard } from './ChannelCard';
@@ -33,9 +35,13 @@ import { ConfirmModal } from '../common/ConfirmModal';
 
 interface AdultChannelsViewProps {
   onNotify?: (type: 'success' | 'error' | 'info' | 'warning', message: string) => void;
+  onCountChange?: (count: number) => void;
 }
 
-export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({ onNotify }) => {
+export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({
+  onNotify,
+  onCountChange,
+}) => {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -81,6 +87,7 @@ export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({ onNotify }
         if (onNotify) onNotify('error', res.error);
       } else {
         setChannels(res.data);
+        if (onCountChange) onCountChange(res.data.length);
       }
     } catch (err: any) {
       const msg = err.message || 'Error al cargar canales adultos';
@@ -89,7 +96,7 @@ export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({ onNotify }
     } finally {
       setIsLoading(false);
     }
-  }, [filters, onNotify]);
+  }, [filters, onNotify, onCountChange]);
 
   useEffect(() => {
     fetchCategories();
@@ -98,6 +105,26 @@ export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({ onNotify }
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const handleResetFilters = () => {
+    setFilters({
+      search: '',
+      category: 'all',
+      status: 'all',
+    });
+    setPage(1);
+  };
+
+  const handleExportVLC = () => {
+    exportToVLCPlaylist(
+      channels,
+      'Loki TV - Canales Adultos',
+      `lokitv_canales_adultos_${new Date().toISOString().slice(0, 10)}.xspf`
+    );
+    if (onNotify) {
+      onNotify('success', 'Playlist VLC (.xspf) de Canales Adultos generada y descargada.');
+    }
+  };
 
   const handleOpenCreate = () => {
     setChannelToEdit(null);
@@ -194,12 +221,12 @@ export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({ onNotify }
         </span>
       </div>
 
-      {/* Control Bar: Filtros Compactos + Contador + Botón Nuevo Canal Adulto */}
-      <div className="bg-white p-3 sm:p-4 rounded-2xl border border-gray-200/90 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        {/* Izquierda: Buscador Compacto + Selects */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1 min-w-0">
+      {/* Control Bar: Filtros Compactos + Limpiar + Exportar VLC + Nuevo Canal Adulto */}
+      <div className="bg-white p-3 sm:p-4 rounded-2xl border border-gray-200/90 shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+        {/* Izquierda: Buscador Compacto + Selects + Botón Limpiar filtros */}
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 flex-1 min-w-0">
           {/* Buscador de ancho moderado */}
-          <div className="relative w-full sm:w-64 md:w-72 shrink-0">
+          <div className="relative w-full sm:w-60 md:w-64 shrink-0">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
               <Search className="w-4 h-4" />
             </div>
@@ -229,7 +256,7 @@ export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({ onNotify }
           </div>
 
           {/* Selector Categoría */}
-          <div className="w-full sm:w-44 shrink-0">
+          <div className="w-full sm:w-40 shrink-0">
             <select
               value={filters.category}
               onChange={(e) => {
@@ -248,7 +275,7 @@ export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({ onNotify }
           </div>
 
           {/* Selector Estado */}
-          <div className="w-full sm:w-40 shrink-0">
+          <div className="w-full sm:w-36 shrink-0">
             <select
               value={filters.status}
               onChange={(e) => {
@@ -263,17 +290,31 @@ export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({ onNotify }
               <option value="maintenance">En Mantenimiento</option>
             </select>
           </div>
+
+          {/* Botón Explícito Limpiar Filtros */}
+          <button
+            type="button"
+            onClick={handleResetFilters}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl transition-all cursor-pointer shrink-0"
+            title="Restablecer búsqueda y filtros a su estado inicial"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-gray-500" />
+            <span>Limpiar filtros</span>
+          </button>
         </div>
 
-        {/* Derecha: Contador Reubicado + Botón Nuevo Canal Adulto */}
-        <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-gray-100">
-          <div className="text-xs text-gray-500 font-medium whitespace-nowrap">
-            Total: <strong className="text-rose-700 font-bold">{totalCount}</strong>{' '}
-            <span className="hidden sm:inline">{totalCount === 1 ? 'canal' : 'canales'}</span>
-            {filters.search || filters.category !== 'all' || filters.status !== 'all' ? (
-              <span className="text-gray-400 text-[11px] ml-1">(filtrado)</span>
-            ) : null}
-          </div>
+        {/* Derecha: Exportar VLC (.xspf) + Botón Nuevo Canal Adulto */}
+        <div className="flex items-center justify-between sm:justify-end gap-2.5 shrink-0 pt-2 xl:pt-0 border-t xl:border-t-0 border-gray-100">
+          <button
+            type="button"
+            onClick={handleExportVLC}
+            disabled={channels.length === 0}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-xl transition-all shadow-2xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            title="Exportar canales adultos a playlist VLC (.xspf) ordenada alfabéticamente"
+          >
+            <Film className="w-3.5 h-3.5 text-orange-600" />
+            <span>Exportar a VLC (.xspf)</span>
+          </button>
 
           <button
             onClick={handleOpenCreate}

@@ -17,6 +17,11 @@ export const AppLayout: React.FC = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [tabCounts, setTabCounts] = useState<Partial<Record<NavigationTab, number>>>({});
+
+  const handleCountChange = (tab: NavigationTab, count: number) => {
+    setTabCounts((prev) => (prev[tab] === count ? prev : { ...prev, [tab]: count }));
+  };
 
   const showToast = (type: 'success' | 'error' | 'info' | 'warning', message: string, title?: string) => {
     const id = Date.now().toString() + Math.random().toString().slice(2, 6);
@@ -48,12 +53,13 @@ export const AppLayout: React.FC = () => {
 
       {/* Main Workspace Area (Right pane) */}
       <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-slate-50">
-        {/* Header - Fijo en la parte superior */}
+        {/* Header - Fijo en la parte superior con identidad visual y contador integrado */}
         <Header
           currentTab={currentTab}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
+          recordCount={tabCounts[currentTab]}
         />
 
         {/* Dynamic Content Body - SCROLL ÚNICAMENTE AQUÍ */}
@@ -69,6 +75,7 @@ export const AppLayout: React.FC = () => {
             <InstallationsView
               key={refreshKey}
               onNotify={(type, msg) => showToast(type, msg)}
+              onCountChange={(count) => handleCountChange('installations', count)}
             />
           )}
 
@@ -76,6 +83,7 @@ export const AppLayout: React.FC = () => {
             <ChannelsView
               key={refreshKey}
               onNotify={(type, msg) => showToast(type, msg)}
+              onCountChange={(count) => handleCountChange('channels', count)}
             />
           )}
 
@@ -83,6 +91,7 @@ export const AppLayout: React.FC = () => {
             <AdultChannelsView
               key={refreshKey}
               onNotify={(type, msg) => showToast(type, msg)}
+              onCountChange={(count) => handleCountChange('adult_channels', count)}
             />
           )}
 
@@ -90,6 +99,7 @@ export const AppLayout: React.FC = () => {
             <UsersView
               key={refreshKey}
               onNotify={(type, msg) => showToast(type, msg)}
+              onCountChange={(count) => handleCountChange('users', count)}
             />
           )}
 
@@ -97,6 +107,7 @@ export const AppLayout: React.FC = () => {
             <SettingsView
               key={refreshKey}
               onNotify={(type, msg) => showToast(type, msg)}
+              onCountChange={(count) => handleCountChange('settings', count)}
             />
           )}
 

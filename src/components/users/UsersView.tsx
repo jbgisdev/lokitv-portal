@@ -32,9 +32,10 @@ import { ConfirmModal } from '../common/ConfirmModal';
 
 interface UsersViewProps {
   onNotify?: (type: 'success' | 'error' | 'info' | 'warning', message: string) => void;
+  onCountChange?: (count: number) => void;
 }
 
-export const UsersView: React.FC<UsersViewProps> = ({ onNotify }) => {
+export const UsersView: React.FC<UsersViewProps> = ({ onNotify, onCountChange }) => {
   const { user, role } = useAuth();
   const isAdmin = role === 'admin';
 
@@ -82,6 +83,7 @@ export const UsersView: React.FC<UsersViewProps> = ({ onNotify }) => {
           list = list.filter((c) => c.code?.toLowerCase() === user.code.toLowerCase());
         }
         setCompanies(list);
+        if (onCountChange) onCountChange(list.length);
       }
     } catch (err: any) {
       const msg = err.message || 'Error al cargar usuarios y empresas';
@@ -90,11 +92,20 @@ export const UsersView: React.FC<UsersViewProps> = ({ onNotify }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [filters, isAdmin, user?.code, onNotify]);
+  }, [filters, isAdmin, user?.code, onNotify, onCountChange]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const handleResetFilters = () => {
+    setFilters({
+      search: '',
+      type: 'all',
+      status: 'all',
+    });
+    setPage(1);
+  };
 
   const handleOpenCreate = () => {
     setCompanyToEdit(null);
@@ -283,6 +294,17 @@ export const UsersView: React.FC<UsersViewProps> = ({ onNotify }) => {
               <option value="blocked">Bloqueados</option>
             </select>
           </div>
+
+          {/* Botón Explícito Limpiar Filtros */}
+          <button
+            type="button"
+            onClick={handleResetFilters}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl transition-all cursor-pointer shrink-0"
+            title="Restablecer búsqueda y filtros a su estado inicial"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-gray-500" />
+            <span>Limpiar filtros</span>
+          </button>
         </div>
 
         {/* Derecha: Contador Reubicado + Botón Agregar Usuario */}

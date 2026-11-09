@@ -30,6 +30,7 @@ import { ConfirmModal } from '../common/ConfirmModal';
 
 interface InstallationsViewProps {
   onNotify?: (type: 'success' | 'error' | 'info' | 'warning', message: string) => void;
+  onCountChange?: (count: number) => void;
 }
 
 interface PendingConfirmAction {
@@ -37,7 +38,7 @@ interface PendingConfirmAction {
   device: AppInstallation;
 }
 
-export const InstallationsView: React.FC<InstallationsViewProps> = ({ onNotify }) => {
+export const InstallationsView: React.FC<InstallationsViewProps> = ({ onNotify, onCountChange }) => {
   const { user, role, isAdmin } = useAuth();
 
   const [installations, setInstallations] = useState<AppInstallation[]>([]);
@@ -97,6 +98,7 @@ export const InstallationsView: React.FC<InstallationsViewProps> = ({ onNotify }
       } else {
         setInstallations(result.data);
         setTotalCount(result.totalCount);
+        if (onCountChange) onCountChange(result.totalCount);
       }
     } catch (err: any) {
       const msg = err.message || 'Error al obtener instalaciones';
@@ -105,7 +107,7 @@ export const InstallationsView: React.FC<InstallationsViewProps> = ({ onNotify }
     } finally {
       setIsLoading(false);
     }
-  }, [filters, role, user?.code, page, pageSize, onNotify]);
+  }, [filters, role, user?.code, page, pageSize, onNotify, onCountChange]);
 
   useEffect(() => {
     fetchCompanies();
@@ -114,6 +116,16 @@ export const InstallationsView: React.FC<InstallationsViewProps> = ({ onNotify }
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const handleResetFilters = () => {
+    setFilters({
+      search: '',
+      status: 'all',
+      adultContent: 'all',
+      company: 'all',
+    });
+    setPage(1);
+  };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilters((prev) => ({ ...prev, search: e.target.value }));
@@ -406,6 +418,17 @@ export const InstallationsView: React.FC<InstallationsViewProps> = ({ onNotify }
               </select>
             </div>
           )}
+
+          {/* Botón Explícito Limpiar Filtros */}
+          <button
+            type="button"
+            onClick={handleResetFilters}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl transition-all cursor-pointer shrink-0"
+            title="Restablecer búsqueda y filtros a su estado inicial"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-gray-500" />
+            <span>Limpiar filtros</span>
+          </button>
         </div>
 
         {/* Derecha: Contador Reubicado + Botón Exportar CSV */}
