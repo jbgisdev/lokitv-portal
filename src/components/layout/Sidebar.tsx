@@ -72,8 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'settings',
       label: 'Configuración',
       icon: <Settings className="w-5 h-5" />,
-      isActivePhase: false,
-      badge: 'Fase 3',
+      isActivePhase: true,
     },
     {
       id: 'map',

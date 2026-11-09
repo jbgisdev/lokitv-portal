@@ -50,6 +50,14 @@ export interface Channel {
   created_at: string;
 }
 
+export interface AppSetting {
+  key: string;
+  value: string;
+  description: string | null;
+  updated_at: string;
+  value_array: string[] | null;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -75,6 +83,12 @@ export interface Database {
         Row: Channel;
         Insert: Partial<Channel>;
         Update: Partial<Channel>;
+        Relationships: [];
+      };
+      app_settings: {
+        Row: AppSetting;
+        Insert: Partial<AppSetting>;
+        Update: Partial<AppSetting>;
         Relationships: [];
       };
     };

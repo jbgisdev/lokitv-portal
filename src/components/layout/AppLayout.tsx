@@ -7,6 +7,7 @@ import { InstallationsView } from '../installations/InstallationsView';
 import { ChannelsView } from '../channels/ChannelsView';
 import { AdultChannelsView } from '../channels/AdultChannelsView';
 import { UsersView } from '../users/UsersView';
+import { SettingsView } from '../settings/SettingsView';
 import { PlaceholderView } from '../placeholder/PlaceholderView';
 import { ToastContainer } from '../common/Toast';
 
@@ -92,7 +93,14 @@ export const AppLayout: React.FC = () => {
             />
           )}
 
-          {(currentTab === 'settings' || currentTab === 'map') && (
+          {currentTab === 'settings' && (
+            <SettingsView
+              key={refreshKey}
+              onNotify={(type, msg) => showToast(type, msg)}
+            />
+          )}
+
+          {currentTab === 'map' && (
             <PlaceholderView
               tab={currentTab}
               onGoToDashboard={() => setCurrentTab('dashboard')}
