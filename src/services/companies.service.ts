@@ -4,7 +4,7 @@ import { Company, UserRole } from '../types';
 export interface GetCompaniesFilter {
   search?: string;
   type?: string;
-  status?: 'all' | 'active' | 'inactive';
+  status?: 'all' | 'active' | 'inactive' | 'blocked';
 }
 
 export interface CompanyWithDeviceCount extends Company {
@@ -41,6 +41,8 @@ export const companiesService = {
         query = query.eq('is_active', true);
       } else if (filter.status === 'inactive') {
         query = query.eq('is_active', false);
+      } else if (filter.status === 'blocked') {
+        query = query.eq('is_blocked', true);
       }
 
       const { data, error } = await query;
@@ -91,6 +93,24 @@ export const companiesService = {
   },
 
   /**
+   * Genera un código de 6 letras minúsculas asegurando que no exista en la base de datos.
+   */
+  async generateUniqueCompanyCode(): Promise<string> {
+    for (let i = 0; i < 10; i++) {
+      const code = generateRandomCompanyCode();
+      const { data } = await (supabase.from('companies') as any)
+        .select('code')
+        .eq('code', code)
+        .maybeSingle();
+
+      if (!data) {
+        return code;
+      }
+    }
+    return generateRandomCompanyCode();
+  },
+
+  /**
    * Crea una nueva empresa / usuario en la tabla companies.
    */
   async createCompany(payload: {
@@ -104,7 +124,8 @@ export const companiesService = {
   }): Promise<{ success: boolean; data?: Company; error?: string }> {
     try {
       const cleanCode = payload.code.trim().toLowerCase();
-      const cleanName = payload.name.trim();
+      const isUser = payload.type === 'user';
+      const cleanName = isUser ? cleanCode : (payload.name.trim() || cleanCode);
 
       // Verificar que el código no exista
       const { data: existing } = await (supabase.from('companies') as any)
@@ -113,21 +134,18 @@ export const companiesService = {
         .maybeSingle();
 
       if (existing) {
-        return { success: false, error: `El código "${cleanCode}" ya está registrado en otra empresa.` };
+        return { success: false, error: `El código "${cleanCode}" ya está registrado en otra empresa o usuario.` };
       }
 
       const insertData: any = {
         name: cleanName,
         code: cleanCode,
-        alias: payload.alias?.trim() || cleanName,
+        alias: isUser ? cleanCode : (payload.alias?.trim() || cleanName),
         type: payload.type || 'user',
-        installations_count: payload.installations_count ?? (payload.type === 'user' ? 1 : 5),
-        is_active: payload.is_active ?? true,
+        installations_count: isUser ? 1 : (payload.installations_count ?? 5),
+        is_active: isUser ? false : (payload.is_active ?? true),
+        is_blocked: isUser ? false : (payload.is_blocked ?? false),
       };
-
-      if (payload.is_blocked !== undefined) {
-        insertData.is_blocked = payload.is_blocked;
-      }
 
       const { data, error } = await (supabase.from('companies') as any)
         .insert(insertData)

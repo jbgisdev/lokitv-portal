@@ -6,6 +6,7 @@ import { DashboardView } from '../dashboard/DashboardView';
 import { InstallationsView } from '../installations/InstallationsView';
 import { ChannelsView } from '../channels/ChannelsView';
 import { AdultChannelsView } from '../channels/AdultChannelsView';
+import { UsersView } from '../users/UsersView';
 import { PlaceholderView } from '../placeholder/PlaceholderView';
 import { ToastContainer } from '../common/Toast';
 
@@ -84,9 +85,14 @@ export const AppLayout: React.FC = () => {
             />
           )}
 
-          {(currentTab === 'users' ||
-            currentTab === 'settings' ||
-            currentTab === 'map') && (
+          {currentTab === 'users' && (
+            <UsersView
+              key={refreshKey}
+              onNotify={(type, msg) => showToast(type, msg)}
+            />
+          )}
+
+          {(currentTab === 'settings' || currentTab === 'map') && (
             <PlaceholderView
               tab={currentTab}
               onGoToDashboard={() => setCurrentTab('dashboard')}
