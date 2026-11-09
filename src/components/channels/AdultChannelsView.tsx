@@ -23,6 +23,7 @@ import {
   channelsService,
   GetChannelsFilter,
   formatChannelNumber,
+  formatCategory,
 } from '../../services/channels.service';
 import { Channel } from '../../types';
 import { ChannelLogo } from './ChannelLogo';
@@ -66,8 +67,8 @@ export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({ onNotify }
   const [copiedStreamId, setCopiedStreamId] = useState<string | null>(null);
 
   const fetchCategories = useCallback(async () => {
-    // Para canales adultos, la única categoría reglamentaria y permitida es 'ADULTOS'
-    setCategories(['ADULTOS']);
+    // Para canales adultos, la única categoría reglamentaria y permitida es 'Adultos'
+    setCategories(['Adultos']);
   }, []);
 
   const loadData = useCallback(async () => {
@@ -402,9 +403,9 @@ export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({ onNotify }
                               </div>
 
                               {/* Línea 3: Categoría del Canal */}
-                              <div className="flex items-center gap-1 text-[11px] font-bold text-gray-500 uppercase">
+                              <div className="flex items-center gap-1 text-[11px] font-semibold text-gray-500">
                                 <Tag className="w-3 h-3 text-gray-400" />
-                                <span>{channel.category || 'ADULTOS'}</span>
+                                <span>{formatCategory(channel.category) || 'Adultos'}</span>
                               </div>
                             </div>
                           </div>
@@ -569,7 +570,7 @@ export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({ onNotify }
         title="¿Eliminar Canal Adulto?"
         message={
           channelToDelete
-            ? `¿Estás seguro de que deseas eliminar permanentemente el canal adulto "${channelToDelete.name.toUpperCase()}"? Al eliminarlo, el número ${formatChannelNumber(channelToDelete.channel_number)} quedará liberado automáticamente para reaprovecharse en la categoría ${channelToDelete.category || 'ADULTOS'}.`
+            ? `¿Estás seguro de que deseas eliminar permanentemente el canal adulto "${channelToDelete.name.toUpperCase()}"? Al eliminarlo, el número ${formatChannelNumber(channelToDelete.channel_number)} quedará liberado automáticamente para reaprovecharse en la categoría ${formatCategory(channelToDelete.category) || 'Adultos'}.`
             : ''
         }
         deviceModel={channelToDelete ? `${channelToDelete.name} (${formatChannelNumber(channelToDelete.channel_number)})` : undefined}

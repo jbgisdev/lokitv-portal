@@ -21,6 +21,7 @@ import {
   channelsService,
   GetChannelsFilter,
   formatChannelNumber,
+  formatCategory,
 } from '../../services/channels.service';
 import { Channel } from '../../types';
 import { ChannelLogo } from './ChannelLogo';
@@ -254,7 +255,7 @@ export const ChannelsView: React.FC<ChannelsViewProps> = ({ onNotify }) => {
               <option value="all">Categoría: Todas</option>
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
-                  {cat}
+                  {formatCategory(cat)}
                 </option>
               ))}
             </select>
@@ -388,9 +389,9 @@ export const ChannelsView: React.FC<ChannelsViewProps> = ({ onNotify }) => {
                               </div>
 
                               {/* Línea 3: Categoría del Canal */}
-                              <div className="flex items-center gap-1 text-[11px] font-bold text-gray-500 uppercase">
+                              <div className="flex items-center gap-1 text-[11px] font-semibold text-gray-500">
                                 <Tag className="w-3 h-3 text-gray-400" />
-                                <span>{channel.category || 'GENERAL'}</span>
+                                <span>{formatCategory(channel.category) || 'General'}</span>
                               </div>
                             </div>
                           </div>
@@ -555,7 +556,7 @@ export const ChannelsView: React.FC<ChannelsViewProps> = ({ onNotify }) => {
         title="¿Eliminar Canal General?"
         message={
           channelToDelete
-            ? `¿Estás seguro de que deseas eliminar permanentemente el canal "${channelToDelete.name.toUpperCase()}"? Al eliminarlo, el número ${formatChannelNumber(channelToDelete.channel_number)} quedará liberado automáticamente para reaprovecharse en la categoría ${channelToDelete.category || 'GENERAL'}.`
+            ? `¿Estás seguro de que deseas eliminar permanentemente el canal "${channelToDelete.name.toUpperCase()}"? Al eliminarlo, el número ${formatChannelNumber(channelToDelete.channel_number)} quedará liberado automáticamente para reaprovecharse en la categoría ${formatCategory(channelToDelete.category) || 'General'}.`
             : ''
         }
         deviceModel={channelToDelete ? `${channelToDelete.name} (${formatChannelNumber(channelToDelete.channel_number)})` : undefined}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from '../common/Modal';
 import { Channel } from '../../types';
 import {
@@ -6,6 +6,7 @@ import {
   ChannelCalculation,
   ChannelTable,
   formatChannelNumber,
+  formatCategory,
 } from '../../services/channels.service';
 import { CategoryTagSelect } from './CategoryTagSelect';
 import { ChannelLogo } from './ChannelLogo';
@@ -54,84 +55,128 @@ export const ChannelFormModal: React.FC<ChannelFormModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize form
+  // Contador de peticiones asíncronas para descartar respuestas desfasadas (evita race conditions)
+  const reqCounterRef = useRef<number>(0);
+
+  // Función para calcular asíncronamente el número de canal para una categoría dada
+  const fetchChannelCalculation = async (targetCat: string) => {
+    const formatted = formatCategory(targetCat);
+    if (!formatted.trim()) {
+      setChannelNumber(null);
+      setCalculation(null);
+      return;
+    }
+
+    const currentReqId = ++reqCounterRef.current;
+    setIsCalculating(true);
+
+    try {
+      const res = await channelsService.calculateNextChannelNumber(
+        formatted,
+        channelToEdit?.id,
+        table
+      );
+
+      // Solo actualiza el estado si esta es la última petición solicitada
+      if (currentReqId === reqCounterRef.current) {
+        setCalculation(res);
+        setChannelNumber(res.channelNumber);
+      }
+    } catch (err) {
+      console.error('Error calculando número:', err);
+    } finally {
+      if (currentReqId === reqCounterRef.current) {
+        setIsCalculating(false);
+      }
+    }
+  };
+
+  // Inicialización determinista al abrir el modal
   useEffect(() => {
+    if (!isOpen) {
+      reqCounterRef.current++;
+      return;
+    }
+
+    setError(null);
+
     if (channelToEdit) {
+      // MODO EDICIÓN: Carga directamente los datos exactos del canal
       setName(channelToEdit.name || '');
-      setCategory(isAdult ? 'ADULTOS' : (channelToEdit.category || 'GENERAL'));
+      const catFormatted = formatCategory(channelToEdit.category || (isAdult ? 'Adultos' : 'Nacionales'));
+      setCategory(catFormatted);
       setLogoUrl(channelToEdit.logo_url || '');
       setStreamUrl(channelToEdit.stream_url || '');
-      setChannelNumber(channelToEdit.channel_number ? Number(channelToEdit.channel_number) : null);
       setIsActive(channelToEdit.is_active ?? true);
       setEnMantenimiento(channelToEdit.en_mantenimiento ?? false);
+
+      const chNum = Number(channelToEdit.channel_number);
+      if (chNum > 0) {
+        // Asignación síncrona: mantiene su número real y su bloque correspondiente
+        setChannelNumber(chNum);
+        const computedStart = Math.floor(chNum / 100) * 100;
+        setCalculation({
+          channelNumber: chNum,
+          blockStart: computedStart === 0 ? 1 : computedStart,
+          blockEnd: computedStart === 0 ? 99 : computedStart + 99,
+          isNewCategory: false,
+          isFull: false,
+        });
+      } else {
+        // Si el canal tenía 0 o valor inválido en BD, calcula el primer número disponible
+        fetchChannelCalculation(catFormatted);
+      }
     } else {
+      // MODO CREACIÓN: Limpia los campos y calcula para la categoría inicial
       setName('');
-      const defaultCat = isAdult ? 'ADULTOS' : (categories.length > 0 ? categories[0] : 'GENERAL');
+      const defaultCat = formatCategory(isAdult ? 'Adultos' : (categories.length > 0 ? categories[0] : 'Nacionales'));
       setCategory(defaultCat);
       setLogoUrl('');
       setStreamUrl('');
       setChannelNumber(null);
       setIsActive(true);
       setEnMantenimiento(false);
-    }
-    setError(null);
-  }, [channelToEdit, isOpen, categories, isAdult]);
 
-  // Recalculate channel_number
-  const computeChannelNumber = async (targetCat: string, forceRecalculate = false) => {
-    if (!targetCat.trim()) {
-      setChannelNumber(null);
-      setCalculation(null);
+      fetchChannelCalculation(defaultCat);
+    }
+  }, [channelToEdit, isOpen, isAdult]);
+
+  // Manejador cuando el usuario cambia de categoría en el selector de tags
+  const handleCategorySelect = (newCategory: string) => {
+    const formatted = formatCategory(newCategory);
+    setCategory(formatted);
+
+    // En edición: si vuelve a seleccionar la categoría original de este canal, restaura su número original
+    if (
+      isEditing &&
+      channelToEdit?.category &&
+      formatCategory(channelToEdit.category).toLowerCase() === formatted.toLowerCase() &&
+      channelToEdit.channel_number &&
+      Number(channelToEdit.channel_number) > 0
+    ) {
+      reqCounterRef.current++; // Cancela cualquier petición en curso
+      setIsCalculating(false);
+      const originalNum = Number(channelToEdit.channel_number);
+      const computedStart = Math.floor(originalNum / 100) * 100;
+      setChannelNumber(originalNum);
+      setCalculation({
+        channelNumber: originalNum,
+        blockStart: computedStart === 0 ? 1 : computedStart,
+        blockEnd: computedStart === 0 ? 99 : computedStart + 99,
+        isNewCategory: false,
+        isFull: false,
+      });
       return;
     }
 
-    // Si está en edición, no forzó recálculo y la categoría es la misma que la original:
-    if (
-      isEditing &&
-      !forceRecalculate &&
-      channelToEdit?.category &&
-      channelToEdit.category.trim().toUpperCase() === targetCat.trim().toUpperCase() &&
-      channelToEdit.channel_number
-    ) {
-      const currentChNum = Number(channelToEdit.channel_number);
-      // Si el canal guardado previamente tenía 0 o un valor inválido, recalculamos automáticamente a uno válido (>= 1)
-      if (currentChNum > 0) {
-        const computedStart = Math.floor(currentChNum / 100) * 100;
-        setChannelNumber(currentChNum);
-        setCalculation({
-          channelNumber: currentChNum,
-          blockStart: computedStart === 0 ? 1 : computedStart,
-          blockEnd: computedStart + 99,
-          isNewCategory: false,
-          isFull: false,
-        });
-        return;
-      }
-    }
-
-    setIsCalculating(true);
-    const res = await channelsService.calculateNextChannelNumber(
-      targetCat,
-      channelToEdit?.id,
-      table
-    );
-
-    setCalculation(res);
-    setChannelNumber(res.channelNumber);
-    setIsCalculating(false);
+    // Si cambió a una categoría diferente o está en modo creación, calcula el número para esa categoría
+    fetchChannelCalculation(formatted);
   };
 
-  // Trigger compute when category changes
-  useEffect(() => {
-    if (isOpen) {
-      const isOriginalCategory =
-        isEditing &&
-        channelToEdit?.category &&
-        channelToEdit.category.trim().toUpperCase() === category.trim().toUpperCase();
-
-      computeChannelNumber(category, !isOriginalCategory);
-    }
-  }, [category, isOpen]);
+  // Manejador para recálculo manual explícito
+  const handleForceRecalculate = () => {
+    fetchChannelCalculation(category);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -216,8 +261,8 @@ export const ChannelFormModal: React.FC<ChannelFormModalProps> = ({
     }
   };
 
-  // Filtrar categorías si es adultos (solo 'ADULTOS')
-  const availableCategories = isAdult ? ['ADULTOS'] : categories;
+  // Filtrar categorías si es adultos (solo 'Adultos')
+  const availableCategories = isAdult ? ['Adultos'] : categories;
 
   return (
     <Modal
@@ -296,7 +341,7 @@ export const ChannelFormModal: React.FC<ChannelFormModalProps> = ({
         {/* 2. Selector de Categoría (UI de Tags / Badges Visuales) */}
         <CategoryTagSelect
           value={category}
-          onChange={(newCat) => setCategory(newCat)}
+          onChange={handleCategorySelect}
           categories={availableCategories}
           accentColor={isAdult ? 'rose' : 'emerald'}
           allowAddNew={!isAdult}
@@ -314,7 +359,7 @@ export const ChannelFormModal: React.FC<ChannelFormModalProps> = ({
               {isEditing && !isAdult && (
                 <button
                   type="button"
-                  onClick={() => computeChannelNumber(category, true)}
+                  onClick={handleForceRecalculate}
                   className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 cursor-pointer transition-colors"
                   title="Buscar el siguiente número libre en esta categoría"
                 >

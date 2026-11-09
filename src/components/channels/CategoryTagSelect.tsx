@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Tag, Plus, Check, X } from 'lucide-react';
+import { formatCategory } from '../../services/channels.service';
 
 interface CategoryTagSelectProps {
   value: string;
@@ -27,15 +28,15 @@ export const CategoryTagSelect: React.FC<CategoryTagSelectProps> = ({
   const handleAddNew = (e: React.FormEvent) => {
     e.preventDefault();
     if (newCategoryInput.trim()) {
-      const clean = newCategoryInput.trim().toUpperCase();
-      onChange(clean);
+      const formatted = formatCategory(newCategoryInput);
+      onChange(formatted);
       setNewCategoryInput('');
       setIsAddingNew(false);
     }
   };
 
   const isCurrentInList = categories.some(
-    (c) => c.toUpperCase() === (value || '').toUpperCase()
+    (c) => formatCategory(c).toLowerCase() === formatCategory(value).toLowerCase()
   );
 
   return (
@@ -47,7 +48,7 @@ export const CategoryTagSelect: React.FC<CategoryTagSelectProps> = ({
         </label>
         {value && (
           <span className="text-[11px] text-gray-500">
-            Seleccionada: <strong className="text-gray-900 font-bold uppercase">{value}</strong>
+            Seleccionada: <strong className="text-gray-900 font-bold">{formatCategory(value)}</strong>
           </span>
         )}
       </div>
@@ -55,12 +56,12 @@ export const CategoryTagSelect: React.FC<CategoryTagSelectProps> = ({
       {/* Visual Chips / Tags Grid */}
       <div className="flex flex-wrap gap-2 items-center">
         {categories.map((cat) => {
-          const isSelected = (value || '').toUpperCase() === cat.toUpperCase();
+          const isSelected = formatCategory(value).toLowerCase() === formatCategory(cat).toLowerCase();
           return (
             <button
               key={cat}
               type="button"
-              onClick={() => onChange(cat)}
+              onClick={() => onChange(formatCategory(cat))}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer select-none ${
                 isSelected
                   ? activeStyles
@@ -68,7 +69,7 @@ export const CategoryTagSelect: React.FC<CategoryTagSelectProps> = ({
               }`}
             >
               {isSelected && <Check className="w-3.5 h-3.5" />}
-              <span>{cat}</span>
+              <span>{formatCategory(cat)}</span>
             </button>
           );
         })}
@@ -80,7 +81,7 @@ export const CategoryTagSelect: React.FC<CategoryTagSelectProps> = ({
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer select-none ${activeStyles}`}
           >
             <Check className="w-3.5 h-3.5" />
-            <span>{value.toUpperCase()}</span>
+            <span>{formatCategory(value)}</span>
           </button>
         )}
 
@@ -101,9 +102,9 @@ export const CategoryTagSelect: React.FC<CategoryTagSelectProps> = ({
             <input
               type="text"
               value={newCategoryInput}
-              onChange={(e) => setNewCategoryInput(e.target.value.toUpperCase())}
-              placeholder="NOMBRE CATEGORÍA..."
-              className="px-2.5 py-1 text-xs font-bold uppercase text-gray-900 placeholder-gray-400 focus:outline-none w-36"
+              onChange={(e) => setNewCategoryInput(e.target.value)}
+              placeholder="Ej: Variedades..."
+              className="px-2.5 py-1 text-xs font-semibold text-gray-900 placeholder-gray-400 focus:outline-none w-36"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {

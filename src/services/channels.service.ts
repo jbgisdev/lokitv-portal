@@ -29,6 +29,29 @@ export function formatChannelNumber(num: number | string | null | undefined): st
   return `CH ${String(parsed).padStart(3, '0')}`;
 }
 
+/**
+ * Da formato estándar a la categoría:
+ * Primera letra en mayúscula y el resto en minúsculas (ej: 'Nacionales', 'Musicales', 'Deportes', 'Adultos').
+ * Excepción: '24/7' u otros patrones numéricos similares se preservan intactos.
+ */
+export function formatCategory(cat: string | null | undefined): string {
+  if (!cat) return '';
+  const trimmed = cat.trim();
+  if (!trimmed) return '';
+
+  if (/^\d+\/\d+$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  return trimmed
+    .split(/\s+/)
+    .map((word) => {
+      if (!word) return '';
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+}
+
 export const channelsService = {
   /**
    * Obtiene la lista de canales ordenada alfabéticamente por nombre.
@@ -91,10 +114,14 @@ export const channelsService = {
   },
 
   /**
-   * Obtiene las categorías únicas de la tabla indicada.
+   * Obtiene las categorías únicas de la tabla indicada en formato Title Case (ej: 'Nacionales', 'Deportes', 'Adultos').
    */
   async getCategories(table: ChannelTable = 'channels'): Promise<string[]> {
     try {
+      if (table === 'adult_channels') {
+        return ['Adultos'];
+      }
+
       const { data, error } = await (supabase.from(table) as any).select('category');
 
       if (error) throw error;
@@ -102,7 +129,7 @@ export const channelsService = {
       const set = new Set<string>();
       ((data as any[]) || []).forEach((row: any) => {
         if (row?.category && typeof row.category === 'string' && row.category.trim()) {
-          set.add(row.category.trim().toUpperCase());
+          set.add(formatCategory(row.category));
         }
       });
 
@@ -124,7 +151,8 @@ export const channelsService = {
     excludeChannelId?: string,
     table: ChannelTable = 'channels'
   ): Promise<ChannelCalculation> {
-    const cleanCategory = targetCategory.trim().toUpperCase();
+    const formattedTarget = formatCategory(targetCategory);
+    const cleanCategoryLower = formattedTarget.toLowerCase();
 
     const { data: allChannels, error } = await (supabase.from(table) as any)
       .select('id, category, channel_number');
@@ -142,11 +170,32 @@ export const channelsService = {
 
     const channelsList = (allChannels as Channel[]) || [];
 
-    // Canales de la categoría seleccionada
+    // Caso Especial: Categoría Nacionales o Nacional (rango reglamentario de 1 a 99)
+    if (cleanCategoryLower === 'nacionales' || cleanCategoryLower === 'nacional') {
+      const existingIn1to99 = channelsList
+        .filter((c) => !excludeChannelId || c.id !== excludeChannelId)
+        .map((c) => Number(c.channel_number))
+        .filter((n) => !isNaN(n) && n >= 1 && n <= 99);
+
+      const usedSet = new Set(existingIn1to99);
+      for (let candidate = 1; candidate <= 99; candidate++) {
+        if (!usedSet.has(candidate)) {
+          return {
+            channelNumber: candidate,
+            blockStart: 1,
+            blockEnd: 99,
+            isNewCategory: false,
+            isFull: false,
+          };
+        }
+      }
+    }
+
+    // Canales de la categoría seleccionada (búsqueda insensible a mayúsculas/minúsculas)
     const categoryChannels = channelsList.filter(
       (c) =>
         c.category &&
-        c.category.trim().toUpperCase() === cleanCategory &&
+        formatCategory(c.category).toLowerCase() === cleanCategoryLower &&
         (!excludeChannelId || c.id !== excludeChannelId)
     );
 
@@ -163,15 +212,26 @@ export const channelsService = {
         .filter((n) => !isNaN(n) && n > 0);
 
       if (categoryNumbers.length > 0) {
-        const minCatNum = Math.min(...categoryNumbers);
-        let blockStart = Math.floor(minCatNum / 100) * 100;
-        const blockEnd = blockStart + 99;
+        // Encontramos la centena predominante de los canales de esta categoría
+        const centenaryCounts: Record<number, number> = {};
+        categoryNumbers.forEach((num) => {
+          const cent = Math.floor(num / 100) * 100;
+          centenaryCounts[cent] = (centenaryCounts[cent] || 0) + 1;
+        });
 
-        // La primera centena es 0-99, pero en televisión los canales válidos inician en 1 (el canal 0 NO es válido)
-        const startCandidate = blockStart === 0 ? 1 : blockStart;
-        if (blockStart === 0) {
-          blockStart = 1;
+        let dominantBlockStart = 100;
+        let maxCount = -1;
+        for (const [centStr, count] of Object.entries(centenaryCounts)) {
+          const cent = Number(centStr);
+          if (count > maxCount) {
+            maxCount = count;
+            dominantBlockStart = cent;
+          }
         }
+
+        const blockStart = dominantBlockStart === 0 ? 1 : dominantBlockStart;
+        const blockEnd = dominantBlockStart + 99;
+        const startCandidate = dominantBlockStart === 0 ? 1 : dominantBlockStart;
 
         const usedSet = new Set(categoryNumbers);
 
@@ -198,27 +258,6 @@ export const channelsService = {
           isFull: true,
           warning: `El bloque (${blockStart}-${blockEnd}) está lleno. Se asignó la siguiente centena libre (${nextBlockStart}).`,
         };
-      }
-    }
-
-    // Caso Especial: Categoría NACIONALES o NACIONAL (rango reglamentario de 1 a 99)
-    if (cleanCategory === 'NACIONALES' || cleanCategory === 'NACIONAL') {
-      const existingIn1to99 = channelsList
-        .filter((c) => !excludeChannelId || c.id !== excludeChannelId)
-        .map((c) => Number(c.channel_number))
-        .filter((n) => !isNaN(n) && n >= 1 && n <= 99);
-
-      const usedSet = new Set(existingIn1to99);
-      for (let candidate = 1; candidate <= 99; candidate++) {
-        if (!usedSet.has(candidate)) {
-          return {
-            channelNumber: candidate,
-            blockStart: 1,
-            blockEnd: 99,
-            isNewCategory: false,
-            isFull: false,
-          };
-        }
       }
     }
 
@@ -256,11 +295,11 @@ export const channelsService = {
   ): Promise<{ success: boolean; data?: Channel; error?: string }> {
     try {
       const cleanName = channelData.name.trim().toUpperCase();
-      const cleanCategory = channelData.category.trim().toUpperCase();
+      const formattedCat = formatCategory(channelData.category);
 
       const insertPayload = {
         name: cleanName,
-        category: cleanCategory,
+        category: formattedCat,
         logo_url: channelData.logo_url?.trim() || null,
         stream_url: channelData.stream_url.trim(),
         channel_number: channelData.channel_number,
@@ -305,7 +344,7 @@ export const channelsService = {
         updatePayload.name = updatePayload.name.trim().toUpperCase();
       }
       if (updatePayload.category) {
-        updatePayload.category = updatePayload.category.trim().toUpperCase();
+        updatePayload.category = formatCategory(updatePayload.category);
       }
       if (updatePayload.stream_url) {
         updatePayload.stream_url = updatePayload.stream_url.trim();

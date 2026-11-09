@@ -1,7 +1,7 @@
 import React from 'react';
 import { Channel } from '../../types';
 import { ChannelLogo } from './ChannelLogo';
-import { formatChannelNumber } from '../../services/channels.service';
+import { formatChannelNumber, formatCategory } from '../../services/channels.service';
 import {
   CheckCircle2,
   XCircle,
@@ -62,9 +62,9 @@ export const ChannelCard: React.FC<ChannelCardProps> = ({
               <span>{formatChannelNumber(channel.channel_number)}</span>
             </div>
             {/* Línea 3: Categoría */}
-            <div className="flex items-center gap-1 text-[11px] font-bold text-gray-500 uppercase mt-0.5">
+            <div className="flex items-center gap-1 text-[11px] font-semibold text-gray-500 mt-0.5">
               <Tag className="w-3 h-3 text-gray-400" />
-              <span>{channel.category || 'GENERAL'}</span>
+              <span>{formatCategory(channel.category) || 'General'}</span>
             </div>
           </div>
         </div>
