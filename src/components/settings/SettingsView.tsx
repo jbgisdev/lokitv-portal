@@ -132,40 +132,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNotify }) => {
   };
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto animate-in fade-in duration-300">
-      {/* Header: Título + Contador + Botón Nuevo */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
-            <span>Configuración del Sistema</span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-              <Settings className="w-3.5 h-3.5 text-emerald-600" />
-              app_settings
-            </span>
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-            Total de <strong className="text-emerald-700 font-semibold">{settings.length}</strong>{' '}
-            {settings.length === 1 ? 'parámetro configurado' : 'parámetros configurados'}
-            {searchTerm ? <span className="text-gray-400 ml-1.5">(con búsqueda aplicada)</span> : null}
-          </p>
-        </div>
-
-        {/* Botón Agregar Configuración (Solo Administradores) */}
-        {isAdmin && (
-          <button
-            onClick={handleOpenCreate}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm shadow-emerald-200 transition-all cursor-pointer self-start sm:self-auto shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Agregar Configuración</span>
-          </button>
-        )}
-      </div>
-
-      {/* Barra de Búsqueda con botón X */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/90 shadow-xs">
-        <div className="relative max-w-xl">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+    <div className="space-y-4 max-w-7xl mx-auto animate-in fade-in duration-300">
+      {/* Control Bar: Búsqueda Compacta + Contador + Botón Agregar Configuración */}
+      <div className="bg-white p-3 sm:p-4 rounded-2xl border border-gray-200/90 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Izquierda: Buscador Compacto */}
+        <div className="relative w-full sm:w-80 md:w-96 shrink-0">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
             <Search className="w-4 h-4" />
           </div>
           <input
@@ -173,16 +145,37 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNotify }) => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar por clave (key), valor o descripción..."
-            className="w-full pl-10 pr-9 py-2 bg-gray-50/80 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+            className="w-full pl-9 pr-8 py-2 bg-gray-50/80 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
           />
           {searchTerm && (
             <button
               type="button"
               onClick={() => setSearchTerm('')}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-700 cursor-pointer transition-colors"
+              className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-700 cursor-pointer transition-colors"
               title="Borrar búsqueda"
             >
               <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Derecha: Contador Reubicado + Botón Agregar Configuración */}
+        <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+          <div className="text-xs text-gray-500 font-medium whitespace-nowrap">
+            Total: <strong className="text-emerald-700 font-bold">{settings.length}</strong>{' '}
+            <span className="hidden sm:inline">
+              {settings.length === 1 ? 'parámetro' : 'parámetros'}
+            </span>
+            {searchTerm ? <span className="text-gray-400 text-[11px] ml-1">(filtrado)</span> : null}
+          </div>
+
+          {isAdmin && (
+            <button
+              onClick={handleOpenCreate}
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm shadow-emerald-200 transition-all cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Agregar Configuración</span>
             </button>
           )}
         </div>
@@ -364,3 +357,4 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNotify }) => {
     </div>
   );
 };
+

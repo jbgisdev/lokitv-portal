@@ -134,3 +134,4 @@ export const SettingCard: React.FC<SettingCardProps> = ({ setting, onEdit }) => 
     </div>
   );
 };
+

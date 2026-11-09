@@ -185,50 +185,22 @@ export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({ onNotify }
   const paginatedChannels = channels.slice((page - 1) * pageSize, page * pageSize);
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto animate-in fade-in duration-300">
-      {/* Aviso de Protección Parental */}
-      <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800">
+    <div className="space-y-4 max-w-7xl mx-auto animate-in fade-in duration-300">
+      {/* Aviso de Protección Parental Compacto */}
+      <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800">
         <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
         <span className="leading-relaxed">
-          <strong>Catálogo Protegido (+18):</strong> Estas señales solo son visibles en los dispositivos que tengan expresamente activada la casilla <strong>Contenido Adulto (+18)</strong> en el panel de Instalaciones.
+          <strong>Catálogo Protegido (+18):</strong> Estas señales solo son visibles en los dispositivos que tengan activada la casilla <strong>Contenido Adulto (+18)</strong> en Instalaciones.
         </span>
       </div>
 
-      {/* Header: Title + Counter + New Channel Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
-            <span>Canales Adultos (+18)</span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300">
-              <Flame className="w-3.5 h-3.5 text-rose-600" />
-              Restringido
-            </span>
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-            Total de <strong className="text-rose-700 font-semibold">{totalCount}</strong>{' '}
-            {totalCount === 1 ? 'canal registrado' : 'canales registrados'}
-            {filters.search || filters.category !== 'all' || filters.status !== 'all' ? (
-              <span className="text-gray-400 ml-1.5">(con filtros aplicados)</span>
-            ) : null}
-          </p>
-        </div>
-
-        {/* Primary Action Button */}
-        <button
-          onClick={handleOpenCreate}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm shadow-rose-200 transition-all cursor-pointer self-start sm:self-auto shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Nuevo Canal Adulto</span>
-        </button>
-      </div>
-
-      {/* Control Bar: Search and Filters (Clean Light Style) */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/90 shadow-xs space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
-          {/* Search Input: Strictly by Name or Channel Number (6 cols on lg) */}
-          <div className="lg:col-span-6 relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+      {/* Control Bar: Filtros Compactos + Contador + Botón Nuevo Canal Adulto */}
+      <div className="bg-white p-3 sm:p-4 rounded-2xl border border-gray-200/90 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        {/* Izquierda: Buscador Compacto + Selects */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1 min-w-0">
+          {/* Buscador de ancho moderado */}
+          <div className="relative w-full sm:w-64 md:w-72 shrink-0">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
               <Search className="w-4 h-4" />
             </div>
             <input
@@ -238,8 +210,8 @@ export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({ onNotify }
                 setFilters((prev) => ({ ...prev, search: e.target.value }));
                 setPage(1);
               }}
-              placeholder="Buscar por nombre o número de canal (ej: 005, PLAYBOY)..."
-              className="w-full pl-10 pr-9 py-2 bg-gray-50/80 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all"
+              placeholder="Buscar canal adulto (ej: 005, PLAYBOY)..."
+              className="w-full pl-9 pr-8 py-2 bg-gray-50/80 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all"
             />
             {filters.search && (
               <button
@@ -248,7 +220,7 @@ export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({ onNotify }
                   setFilters((prev) => ({ ...prev, search: '' }));
                   setPage(1);
                 }}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-700 cursor-pointer transition-colors"
+                className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-700 cursor-pointer transition-colors"
                 title="Borrar búsqueda"
               >
                 <X className="w-4 h-4" />
@@ -256,15 +228,15 @@ export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({ onNotify }
             )}
           </div>
 
-          {/* Category Filter (3 cols on lg) */}
-          <div className="lg:col-span-3">
+          {/* Selector Categoría */}
+          <div className="w-full sm:w-44 shrink-0">
             <select
               value={filters.category}
               onChange={(e) => {
                 setFilters((prev) => ({ ...prev, category: e.target.value }));
                 setPage(1);
               }}
-              className="w-full px-3 py-2 bg-gray-50/80 border border-gray-300 rounded-xl text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white truncate"
+              className="w-full px-3 py-2 bg-gray-50/80 border border-gray-300 rounded-xl text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white truncate cursor-pointer"
             >
               <option value="all">Categoría: Todas</option>
               {categories.map((cat) => (
@@ -275,15 +247,15 @@ export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({ onNotify }
             </select>
           </div>
 
-          {/* Status Filter (3 cols on lg) */}
-          <div className="lg:col-span-3">
+          {/* Selector Estado */}
+          <div className="w-full sm:w-40 shrink-0">
             <select
               value={filters.status}
               onChange={(e) => {
                 setFilters((prev) => ({ ...prev, status: e.target.value as any }));
                 setPage(1);
               }}
-              className="w-full px-3 py-2 bg-gray-50/80 border border-gray-300 rounded-xl text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white"
+              className="w-full px-3 py-2 bg-gray-50/80 border border-gray-300 rounded-xl text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white cursor-pointer"
             >
               <option value="all">Estado: Todos</option>
               <option value="active">Solo Activos (En Vivo)</option>
@@ -291,6 +263,25 @@ export const AdultChannelsView: React.FC<AdultChannelsViewProps> = ({ onNotify }
               <option value="maintenance">En Mantenimiento</option>
             </select>
           </div>
+        </div>
+
+        {/* Derecha: Contador Reubicado + Botón Nuevo Canal Adulto */}
+        <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-gray-100">
+          <div className="text-xs text-gray-500 font-medium whitespace-nowrap">
+            Total: <strong className="text-rose-700 font-bold">{totalCount}</strong>{' '}
+            <span className="hidden sm:inline">{totalCount === 1 ? 'canal' : 'canales'}</span>
+            {filters.search || filters.category !== 'all' || filters.status !== 'all' ? (
+              <span className="text-gray-400 text-[11px] ml-1">(filtrado)</span>
+            ) : null}
+          </div>
+
+          <button
+            onClick={handleOpenCreate}
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm shadow-rose-200 transition-all cursor-pointer shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nuevo Canal Adulto</span>
+          </button>
         </div>
       </div>
 

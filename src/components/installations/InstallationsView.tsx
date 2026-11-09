@@ -321,49 +321,22 @@ export const InstallationsView: React.FC<InstallationsViewProps> = ({ onNotify }
   };
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto animate-in fade-in duration-300">
-      {/* Título de la sección con Contador Sutil de Registros */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">
-            Listado de Instalaciones
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-            Total de <strong className="text-emerald-700 font-semibold">{totalCount}</strong>{' '}
-            {totalCount === 1 ? 'dispositivo registrado' : 'dispositivos registrados'}
-            {filters.search || filters.status !== 'all' || filters.adultContent !== 'all' || filters.company !== 'all' ? (
-              <span className="text-gray-400 ml-1.5">(con filtros aplicados)</span>
-            ) : null}
-          </p>
-        </div>
-
-        {/* Top Actions: Export CSV */}
-        <div className="flex items-center gap-2.5">
-          <button
-            onClick={handleExportCSV}
-            disabled={installations.length === 0}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 border border-gray-300 rounded-xl transition-all shadow-2xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <Download className="w-3.5 h-3.5 text-gray-500" />
-            <span>Exportar CSV</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Control Bar: Search & Filters (Clean Light Theme) */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/90 shadow-xs space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
-          {/* Search Input (5 cols on lg) */}
-          <div className="lg:col-span-5 relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+    <div className="space-y-4 max-w-7xl mx-auto animate-in fade-in duration-300">
+      {/* Control Bar: Filtros Compactos + Contador + Exportar CSV */}
+      <div className="bg-white p-3 sm:p-4 rounded-2xl border border-gray-200/90 shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+        {/* Izquierda: Buscador Compacto + Selects */}
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 flex-1 min-w-0">
+          {/* Buscador de ancho moderado */}
+          <div className="relative w-full sm:w-60 md:w-64 shrink-0">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
               <Search className="w-4 h-4" />
             </div>
             <input
               type="text"
               value={filters.search}
               onChange={handleSearchChange}
-              placeholder="Buscar por ID, modelo, alias..."
-              className="w-full pl-10 pr-9 py-2 bg-gray-50/80 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+              placeholder="Buscar ID, modelo, alias..."
+              className="w-full pl-9 pr-8 py-2 bg-gray-50/80 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
             />
             {filters.search && (
               <button
@@ -372,7 +345,7 @@ export const InstallationsView: React.FC<InstallationsViewProps> = ({ onNotify }
                   setFilters((prev) => ({ ...prev, search: '' }));
                   setPage(1);
                 }}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-700 cursor-pointer transition-colors"
+                className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-700 cursor-pointer transition-colors"
                 title="Borrar búsqueda"
               >
                 <X className="w-4 h-4" />
@@ -380,32 +353,32 @@ export const InstallationsView: React.FC<InstallationsViewProps> = ({ onNotify }
             )}
           </div>
 
-          {/* Status Filter (2 cols on lg) */}
-          <div className="lg:col-span-3">
+          {/* Selector Estado */}
+          <div className="w-full sm:w-36 shrink-0">
             <select
               value={filters.status}
               onChange={(e) => {
                 setFilters((prev) => ({ ...prev, status: e.target.value as any }));
                 setPage(1);
               }}
-              className="w-full px-3 py-2 bg-gray-50/80 border border-gray-300 rounded-xl text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+              className="w-full px-3 py-2 bg-gray-50/80 border border-gray-300 rounded-xl text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white cursor-pointer"
             >
               <option value="all">Estado: Todos</option>
               <option value="active">Solo Activos</option>
               <option value="inactive">Solo Inactivos</option>
-              <option value="blocked">Solo Bloqueados</option>
+              <option value="blocked">Bloqueados</option>
             </select>
           </div>
 
-          {/* Adult Content Filter (2 cols on lg) */}
-          <div className="lg:col-span-2">
+          {/* Selector Contenido Adulto */}
+          <div className="w-full sm:w-36 shrink-0">
             <select
               value={filters.adultContent}
               onChange={(e) => {
                 setFilters((prev) => ({ ...prev, adultContent: e.target.value as any }));
                 setPage(1);
               }}
-              className="w-full px-3 py-2 bg-gray-50/80 border border-gray-300 rounded-xl text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+              className="w-full px-3 py-2 bg-gray-50/80 border border-gray-300 rounded-xl text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white cursor-pointer"
             >
               <option value="all">Adulto: Todos</option>
               <option value="enabled">Con Adulto (+18)</option>
@@ -413,16 +386,16 @@ export const InstallationsView: React.FC<InstallationsViewProps> = ({ onNotify }
             </select>
           </div>
 
-          {/* Admin Company Selector (2 cols on lg if admin) */}
+          {/* Selector Empresa (Solo Admin) */}
           {isAdmin && (
-            <div className="lg:col-span-2">
+            <div className="w-full sm:w-44 shrink-0">
               <select
                 value={filters.company}
                 onChange={(e) => {
                   setFilters((prev) => ({ ...prev, company: e.target.value }));
                   setPage(1);
                 }}
-                className="w-full px-3 py-2 bg-gray-50/80 border border-gray-300 rounded-xl text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white truncate"
+                className="w-full px-3 py-2 bg-gray-50/80 border border-gray-300 rounded-xl text-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white truncate cursor-pointer"
               >
                 <option value="all">Empresa: Todas</option>
                 {companiesList.map((comp) => (
@@ -433,6 +406,26 @@ export const InstallationsView: React.FC<InstallationsViewProps> = ({ onNotify }
               </select>
             </div>
           )}
+        </div>
+
+        {/* Derecha: Contador Reubicado + Botón Exportar CSV */}
+        <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 xl:pt-0 border-t xl:border-t-0 border-gray-100">
+          <div className="text-xs text-gray-500 font-medium whitespace-nowrap">
+            Total: <strong className="text-emerald-700 font-bold">{totalCount}</strong>{' '}
+            <span className="hidden sm:inline">{totalCount === 1 ? 'dispositivo' : 'dispositivos'}</span>
+            {filters.search || filters.status !== 'all' || filters.adultContent !== 'all' || filters.company !== 'all' ? (
+              <span className="text-gray-400 text-[11px] ml-1">(filtrado)</span>
+            ) : null}
+          </div>
+
+          <button
+            onClick={handleExportCSV}
+            disabled={installations.length === 0}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 border border-gray-300 rounded-xl transition-all shadow-2xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+          >
+            <Download className="w-3.5 h-3.5 text-gray-500" />
+            <span>Exportar CSV</span>
+          </button>
         </div>
       </div>
 
